@@ -18,7 +18,7 @@ fn main() {
                     }
                     Ok(n) => {
                         println!("Read bytes: {}", n);
-                        stream.write("+PONG\r\n".as_bytes()).unwrap();
+                        stream.write_all("+PONG\r\n".as_bytes()).unwrap();
                         stream.flush().unwrap();
                     }
                     Err(e) => {
