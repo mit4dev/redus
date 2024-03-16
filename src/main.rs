@@ -13,6 +13,9 @@ fn main() {
                 let mut buf = [0; 64];
 
                 match stream.read(&mut buf) {
+                    Ok(0) => {
+                        println!("Drained!");
+                    }
                     Ok(n) => {
                         println!("Read bytes: {}", n);
                         stream.write("+PONG\r\n".as_bytes()).unwrap();
