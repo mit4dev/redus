@@ -3,6 +3,9 @@ use std::{
     net::TcpListener,
     thread,
 };
+mod command;
+mod parser;
+mod protocol;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
@@ -11,8 +14,6 @@ fn main() {
         match stream {
             Ok(mut stream) => {
                 thread::spawn(move || {
-                    println!("connection");
-
                     let mut buf = [0; 64];
 
                     loop {
