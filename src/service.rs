@@ -95,6 +95,11 @@ impl Service {
 
                 RespResponseFormatter::to_simple_str(OK.to_string())
             }
+            Command::Info(arg) => {
+                println!("info arg: {:?}", arg);
+
+                RespResponseFormatter::to_bulk_str("role:master".to_string())
+            }
         }
     }
 }

@@ -5,6 +5,10 @@ const PING: &str = "ping";
 const SET: &str = "set";
 const GET: &str = "get";
 
+const REPLICATION_INFO: &str = "info";
+#[allow(unused)]
+const REPLICATION_INFO_REPLICATION: &str = "replication";
+
 const SET_EX: &str = "ex";
 const SET_PX: &str = "px";
 
@@ -59,6 +63,9 @@ pub enum Command {
         options: Option<SetOptions>,
     },
     Get(String),
+
+    /// Replication info
+    Info(Option<String>),
 }
 
 impl TryFrom<&str> for Command {
@@ -94,6 +101,11 @@ impl TryFrom<Vec<String>> for Command {
                     exp_type: SetExpiration::try_from(exp.to_owned()).unwrap(),
                     options: None,
                 })
+            }
+            [cmd, section] if *cmd.to_lowercase() == REPLICATION_INFO.to_lowercase() => {
+                let arg = Some(section);
+
+                Ok(Command::Info(arg.cloned()))
             }
             _ => Err(anyhow::anyhow!("Cannot parse `Command`")),
         }
