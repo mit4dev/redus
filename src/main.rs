@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    env,
     io::{Read, Write},
     net::TcpListener,
     sync::{Arc, Mutex},
@@ -15,9 +16,16 @@ mod command;
 mod resp;
 mod service;
 
+const DEFAULT_PORT: &str = "6379";
+
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let port = args.get(2).unwrap_or(&DEFAULT_PORT.to_string()).to_owned();
+
     let store: Store = Arc::new(Mutex::new(HashMap::new()));
-    let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
+    let addr = format!("127.0.0.1:{port}");
+    println!("addr: {addr}");
+    let listener = TcpListener::bind(addr).unwrap();
 
     for stream in listener.incoming() {
         let service = Service::new(Arc::clone(&store));

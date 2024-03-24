@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use chrono::{prelude::*, Duration, TimeDelta};
+use chrono::{prelude::*, Duration};
 
 use crate::{
     command::Command,
@@ -28,6 +28,7 @@ pub struct Service {
     store: Store,
 }
 
+#[allow(unused)]
 impl Service {
     pub fn new(store: Store) -> Self {
         Self { store }
