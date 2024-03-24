@@ -3,6 +3,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use chrono::{prelude::*, Duration, TimeDelta};
+
 use crate::{
     command::Command,
     resp::constant::{RESP_NULL_BULK_STR, RESP_TERMINATOR},
@@ -11,13 +13,23 @@ use crate::{
 const PONG: &str = "PONG";
 const OK: &str = "OK";
 
+#[derive(Debug)]
+pub struct Data {
+    val: String,
+
+    /// Timestamp before
+    expires_at: Option<u64>,
+}
+
+pub type Store = Arc<Mutex<HashMap<String, Data>>>;
+
 #[derive(Debug, Clone)]
 pub struct Service {
-    store: Arc<Mutex<HashMap<String, String>>>,
+    store: Store,
 }
 
 impl Service {
-    pub fn new(store: Arc<Mutex<HashMap<String, String>>>) -> Self {
+    pub fn new(store: Store) -> Self {
         Self { store }
     }
 
@@ -29,14 +41,56 @@ impl Service {
                 let store = self.store.lock().unwrap();
 
                 match store.get(&key) {
-                    Some(val) => RespResponseFormatter::to_bulk_str(val.to_owned()),
+                    Some(data) => match data.expires_at {
+                        Some(ex) => {
+                            let expires =
+                                DateTime::from_timestamp_millis(i64::try_from(ex).unwrap())
+                                    .unwrap();
+                            let now = Utc::now();
+
+                            expires
+                                .timestamp_millis()
+                                .ge(&now.timestamp_millis())
+                                .then(|| RespResponseFormatter::to_bulk_str(data.val.clone()))
+                                .unwrap_or(RESP_NULL_BULK_STR.to_string())
+                        }
+                        None => RespResponseFormatter::to_bulk_str(data.val.to_owned()),
+                    },
                     None => RESP_NULL_BULK_STR.to_string(),
                 }
             }
             Command::Set((key, val)) => {
                 let mut store = self.store.lock().unwrap();
 
-                store.insert(key, val);
+                store.insert(
+                    key,
+                    Data {
+                        val,
+                        expires_at: None,
+                    },
+                );
+
+                RespResponseFormatter::to_simple_str(OK.to_string())
+            }
+            Command::SetWithExp {
+                kv: (key, val),
+                ttl,
+                exp_type,
+                options,
+            } => {
+                let mut store = self.store.lock().unwrap();
+
+                // TODO: calculate exp type!
+                let expires_at =
+                    Utc::now() + Duration::try_milliseconds(ttl.parse::<i64>().unwrap()).unwrap();
+
+                store.insert(
+                    key,
+                    Data {
+                        val,
+                        expires_at: Some(expires_at.timestamp_millis() as u64),
+                    },
+                );
 
                 RespResponseFormatter::to_simple_str(OK.to_string())
             }

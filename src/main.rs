@@ -6,6 +6,8 @@ use std::{
     thread,
 };
 
+use service::Store;
+
 use crate::resp::{data::Raw2, token::RespTokens};
 use crate::service::Service;
 
@@ -14,7 +16,7 @@ mod resp;
 mod service;
 
 fn main() {
-    let store: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let store: Store = Arc::new(Mutex::new(HashMap::new()));
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
 
     for stream in listener.incoming() {
