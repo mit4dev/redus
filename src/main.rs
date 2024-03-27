@@ -7,14 +7,15 @@ use std::{
     thread,
 };
 
-use service::Store;
+mod command;
+mod persist;
+mod resp;
+mod response;
+
+use persist::store::{Store, StoreService};
+use response::ResponseService;
 
 use crate::resp::{data::Raw2, token::RespTokens};
-use crate::service::Service;
-
-mod command;
-mod resp;
-mod service;
 
 const DEFAULT_PORT: &str = "6379";
 
@@ -24,11 +25,11 @@ fn main() {
 
     let store: Store = Arc::new(Mutex::new(HashMap::new()));
     let addr = format!("127.0.0.1:{port}");
-    println!("addr: {addr}");
     let listener = TcpListener::bind(addr).unwrap();
 
     for stream in listener.incoming() {
-        let service = Service::new(Arc::clone(&store));
+        let store = StoreService::new(Arc::clone(&store));
+        let service = ResponseService::new(store);
 
         match stream {
             Ok(mut stream) => {
