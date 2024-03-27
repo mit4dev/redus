@@ -15,7 +15,7 @@ mod response;
 use persist::store::{Store, StoreService};
 use response::ResponseService;
 
-use crate::resp::{data::Raw2, token::RespTokens};
+use crate::resp::{data::RespData, token::RespTokens};
 
 const DEFAULT_PORT: &str = "6379";
 
@@ -41,7 +41,7 @@ fn main() {
                             Ok(_) => {
                                 let input_str = String::from_utf8(buf.to_vec()).unwrap();
                                 let tokens = RespTokens::try_from(input_str).unwrap();
-                                let parsed = Raw2::try_from(tokens).unwrap();
+                                let parsed = RespData::try_from(tokens).unwrap();
                                 let clean: Vec<String> = parsed.try_into().unwrap();
                                 let command = command::Command::try_from(clean).unwrap();
                                 // let res: String = command.try_into().unwrap();
